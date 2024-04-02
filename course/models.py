@@ -1,4 +1,5 @@
 from django.db import models
+from users.models import User
 
 NULLABLE = {'blank': True, 'null': True}
 
@@ -30,3 +31,27 @@ class Lesson(models.Model):
         verbose_name = 'lesson'
         verbose_name_plural = 'lessons'
 
+
+class Payment(models.Model):
+    PAY_CARD = 'card'
+    PAY_CASH = 'cash'
+
+    PAY_TYPES = (
+        (PAY_CASH, 'cash'),
+        (PAY_CARD, 'card')
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='user', **NULLABLE)
+    date_of_payment = models.DateField(verbose_name='date of payment', **NULLABLE, auto_now_add=True)
+    paid_course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='paid course', **NULLABLE)
+    paid_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, verbose_name='paid lesson', **NULLABLE)
+    amount_payment = models.PositiveIntegerField(verbose_name='amount of payment')
+    method_payment = models.CharField(max_length=20, choices=PAY_TYPES, verbose_name='payment method')
+
+
+    def __str__(self):
+        return f'{self.paid_course if self.paid_course else self.paid_lesson} - {self.amount_payment}'
+
+    class Meta:
+        verbose_name = 'Payment'
+        verbose_name_plural = 'Payments'

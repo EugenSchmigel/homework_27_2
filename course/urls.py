@@ -16,7 +16,8 @@ urlpatterns = [
 
     path('subscription_create/', SubscriptionCreateAPIView.as_view(), name='subscription_create'),
     path('subscription_destroy/<int:pk>/', SubscriptionDestroyAPIView.as_view(), name='subscription_destroy'),
-]
+
+    ]
 
 router = routers.SimpleRouter()
 router.register('course', CourseViewSet)

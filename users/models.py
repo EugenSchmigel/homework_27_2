@@ -14,6 +14,8 @@ class User(AbstractUser):
     city =  models.CharField(max_length=150, verbose_name='City', **NULLABLE)
 
     avatar = models.ImageField(upload_to='users/', verbose_name='Avatar', **NULLABLE)
+    is_active = models.BooleanField(default=False, verbose_name='activity')
+
 
 
     USERNAME_FIELD = 'email'

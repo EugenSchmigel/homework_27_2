@@ -9,6 +9,7 @@ class Course(models.Model):
     description = models.TextField(**NULLABLE, verbose_name='Opisanie')
     foto = models.ImageField(upload_to='course/', **NULLABLE, verbose_name='Preview')
 
+    author = models.ForeignKey(User, on_delete=models.CASCADE, **NULLABLE)
 
     def __str__(self):
         return f'{self.name}'
@@ -23,6 +24,8 @@ class Lesson(models.Model):
     course = models.ForeignKey("course.Course", on_delete=models.CASCADE, verbose_name='Poroda')
     foto = models.ImageField(upload_to='course/', **NULLABLE, verbose_name='Preview')
     video = models.TextField(**NULLABLE, verbose_name='Url to video')
+
+    author = models.ForeignKey(User, on_delete=models.CASCADE, **NULLABLE)
 
     def __str__(self):
         return f'{self.name} ({self.course})'

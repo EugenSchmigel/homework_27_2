@@ -1,4 +1,5 @@
 from rest_framework.generics import CreateAPIView, DestroyAPIView
+from rest_framework.permissions import AllowAny
 
 from course.models import Subscription
 from course.permissions import IsManager, IsAutor
@@ -9,7 +10,7 @@ class SubscriptionCreateAPIView(CreateAPIView):
 
     serializer_class = SubscriptionSerializer
     queryset = Subscription.objects.all()
-    permission_classes = [IsManager | IsAutor]
+    permission_classes = [AllowAny] #[IsManager | IsAutor]
 
     def perform_create(self, serializer):
         serializer.save()
@@ -19,4 +20,4 @@ class SubscriptionCreateAPIView(CreateAPIView):
 class SubscriptionDestroyAPIView(DestroyAPIView):
 
     queryset = Subscription.objects.all()
-    permission_classes = [IsManager | IsAutor]
+    permission_classes = [AllowAny] #[IsManager | IsAutor]

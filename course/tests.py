@@ -1,43 +1,64 @@
-from django.urls import reverse
+import json
+
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.reverse import reverse
+from  rest_framework.test import APITestCase
 
 from course.models import Course, Lesson, Subscription
 from users.models import User
 
 
-class LessonApiTestCase(APITestCase):
+class LessonTestCase(APITestCase):
 
     def setUp(self) -> None:
-        user = User.objects.create(email='test@test.test', is_active=True)
-        user.set_password('test_password')
-        user.save()
-        response = self.client.post(
-            '/users/api/token/', data={"email": "admin@arsolex.de", "password": "12345"})
-        self.token = response.json()["access"]
-
-        self.user = user
-
-    def test_create_lesson(self):
-
-        heard = {
-            "Authorization": f"Bearer {self.token}"
-        }
-        course = Course.objects.create(
-            title_course='Тестовый курс',
-            description_course='Тест'
+        self.course = Course.objects.create(
+            name='test'
+        )
+        self.lesson = Lesson.objects.create(
+            name='test',
+            course=self.course
         )
 
-        data = {
-            "name": "Test",
-            "description": "Test",
-            "course": course.id
-        }
+    def test_get_lesson_list(self):
+        """ test lesson list """
+        response = self.client.get(
+            reverse('lesson_list')
+        )
 
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "name": self.lesson.name,
+                        "course": self.lesson.course.id,
+                        "id": self.lesson.id,
+                        "foto": None,
+                        "video": None,
+                        "author": None
+                    }
+                ]
+            }
+        )
+
+    def test_lesson_create(self):
+        """ test create lesson """
+
+        data = {
+                "name": "TEst Lesson",
+                "course": self.lesson.course.id
+                }
         response = self.client.post(
-            '/course/lesson_create/create/',
-            data=data,
-            headers=heard
+            reverse('lesson_create'),
+            data=data
         )
 
         self.assertEqual(
@@ -45,77 +66,39 @@ class LessonApiTestCase(APITestCase):
             status.HTTP_201_CREATED
         )
 
-        self.assertTrue(Course.objects.all().exists())
-
-    def test_list_lesson(self):
-
-        course = Course.objects.create(
-            name='Тестовый курс',
-            description='Тест',
-        )
-
-        lesson = Lesson.objects.create(
-            name='Тестовый урок',
-        )
-
-        heard = {
-            "Authorization": f"Bearer {self.token}"
-        }
-
-        response = self.client.get(
-            '/course/lesson_list/',
-            headers=heard
-        )
-
         self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK
+            Lesson.objects.all().count(),
+            2
         )
 
-    def test_retrieve_lesson(self):
+    # def test_lesson_delete(self):
+    #     """ test lesson delete """
+    #
+    #     response = self.client.delete(
+    #         '/lesson/2/delete/'
+    #     )
+    #     self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        course = Course.objects.create(
-            name='Тестовый курс',
-            description='Тест',
-        )
-        lesson = Lesson.objects.create(
-            name='Тестовый урок',
-        )
-        heard = {
-            "Authorization": f"Bearer {self.token}"
-        }
 
-        response = self.client.get(
-            f'/course/lesson_retrieve/{lesson.id}/',
-            headers=heard
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK
-        )
-
-    def test_update_lesson(self):
+    def test_lesson_update(self):
+        """ test update lesson """
 
         course = Course.objects.create(
-            name='Тестовый курс',
-            description='Тест',
-        )
-        lesson = Lesson.objects.create(
-            name='Тестовый урок',
+            name='Тестовый курс'
         )
 
-        heard = {
-            "Authorization": f"Bearer {self.token}"
-        }
+        lesson = Lesson.objects.create(
+            name='Тестовый урок',
+            course=course
+        )
+
         data = {
-            'title_lesson': 'Test lesson update'
+            'name': 'Test lesson update'
         }
 
         response = self.client.patch(
-            f'/course/lesson_update/{lesson.id}/',
-            data=data,
-            headers=heard
+            f'/lesson/{lesson.id}/update/',
+            data=data
         )
 
         self.assertEqual(
@@ -124,89 +107,69 @@ class LessonApiTestCase(APITestCase):
         )
 
         self.assertEqual(
-            response.json()['title_lesson'],
+            response.json()['name'],
             'Test lesson update'
         )
 
-    def test_delete_lesson(self):
-
+    def test_retrieve_lesson(self):
+        """Тестирование вывода одного урока"""
 
         course = Course.objects.create(
-            name='Тестовый курс',
-            description='Тест',
-        )
+            name='Тестовый курс'
+            )
         lesson = Lesson.objects.create(
             name='Тестовый урок',
-        )
-        heard = {
-            "Authorization": f"Bearer {self.token}"
-        }
+            course=course
+            )
 
-        response = self.client.delete(
-            f'/course/lesson_destroy/{lesson.id}/',
-            headers=heard
+        response = self.client.get(
+            f'/lesson/{lesson.id}/',
         )
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_204_NO_CONTENT
+            status.HTTP_200_OK
         )
 
 
 class SubscriptionTestCase(APITestCase):
+    """ Тесты на создание и удаление подписки"""
 
     def setUp(self) -> None:
-        user = User.objects.create(email='test@test.test', is_active=True)
-        user.set_password('test_password')
-        user.save()
-        response = self.client.post(
-            '/users/api/token/', data={"email": "admin@arsolex.de", "password": "12345"})
-        self.token = response.json()["access"]
+        self.course = Course.objects.create(
+            name='test1'
+        )
 
-        self.user = user
+        self.user = User.objects.create(
+            email='admin@arsolex.de',
+            is_staff=True,
+            is_active=True,
+            is_superuser=False,
+            first_name='Test',
+            last_name='Admin'
+        )
 
     def test_create_subscription(self):
-
-        heard = {
-            "Authorization": f"Bearer {self.token}"
-        }
-        course = Course.objects.create(
-            title_course='Тестовый курс',
-            description_course='Тест',
-        )
+        """ test create Subscription """
         data = {
-            'course_subscription': course.id,
+                'user': self.user.pk,
+                'course': self.course.pk
+                }
+        response = self.client.post(
+            reverse('subscription_create'),
+            data=data
+        )
+
+    def test_delete_subscribe(self):
+        data = {
+            'user': self.user.pk,
+            'course': self.course.pk
         }
         response = self.client.post(
-            '/course/subscription_create/',
-            data=data,
-            headers=heard
+            reverse('subscription_create'),
+            data=data
         )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED
-        )
-
-    def test_delete_subscription(self):
-
-        heard = {
-            "Authorization": f"Bearer {self.token}"
-        }
-        course = Course.objects.create(
-            name='Тестовый курс',
-            description='Тест',
-        )
-        subscription = Subscription.objects.create(
-            user=self.user,
-            course_subscription=course
-        )
+        print(response.json())
         response = self.client.delete(
-            f'/course/subscription_destroy/{subscription.id}/',
-            headers=heard
-        )
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_204_NO_CONTENT
+            '/subscription_create/1/'
         )

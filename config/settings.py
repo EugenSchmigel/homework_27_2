@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'course',
     'users',
-    'payment',
     'django_filters',
     'rest_framework_simplejwt',
 

@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 from datetime import timedelta
 from pathlib import Path
+import os.path
+
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'drf_yasg',
+    'django_celery_beat',
 
     'rest_framework',
     'course',
@@ -164,3 +168,41 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1500),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=100),
 }
+
+
+# Настройки для Celery
+
+# URL-адрес брокера сообщений
+CELERY_BROKER_URL = 'redis://localhost:6379' # Например, Redis, который по умолчанию работает на порту 6379
+
+# URL-адрес брокера результатов, также Redis
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+
+# Часовой пояс для работы Celery
+CELERY_TIMEZONE = "Australia/Tasmania"
+
+# Флаг отслеживания выполнения задач
+CELERY_TASK_TRACK_STARTED = True
+
+# Максимальное время на выполнение задачи
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+
+# Настройки для Celery
+CELERY_BEAT_SCHEDULE = {
+    'check': {
+        'task': 'learning.tasks.check',
+        'schedule': crontab(minute='55', hour='23'),
+    },
+    'last_login': {
+        'task': 'learning.tasks.last_login_user',
+        'schedule': crontab(minute='0', hour='0'),
+    }
+}
+
+
+EMAIL_HOST = 'server28.webgo24.de'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_USE_SSL = True

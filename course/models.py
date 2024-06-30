@@ -26,6 +26,7 @@ class Lesson(models.Model):
     video = models.TextField(**NULLABLE, verbose_name='Url to video')
 
     author = models.ForeignKey(User, on_delete=models.CASCADE, **NULLABLE)
+    date_create = models.DateField(verbose_name='lesson create date', auto_now_add=True)
 
     def __str__(self):
         return f'{self.name} ({self.course})'
